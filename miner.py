@@ -1,6 +1,7 @@
-import pygame
-import random
 import math
+import random
+
+import pygame
 
 # Initialize pygame
 pygame.init()
@@ -134,8 +135,10 @@ def main():
         font = pygame.font.SysFont(None, 36)
         fuel_text = font.render(f"Fuel: {ship.fuel:.1f}", True, WHITE)
         minerals_text = font.render(f"Minerals: {ship.minerals}", True, WHITE)
+        angle_text = font.render(f"Angle: {ship.angle}", True, WHITE)
         screen.blit(fuel_text, (10, 10))
         screen.blit(minerals_text, (10, 50))
+        screen.blit(angle_text, (10, 80))
 
         pygame.display.flip()
         clock.tick(60)
