@@ -1,4 +1,5 @@
 ﻿import os
+import pathlib
 from typing import Callable, List
 
 import neat
@@ -8,21 +9,6 @@ from custom_reporter import NewBestReport
 from neat.parallel import ParallelEvaluator
 from visualizer import TrainingVisualizer
 
-def eval_genomes(genomes:List[neat.DefaultGenome], config:neat.Config, simulation_evaluation: Callable):
-    # First evaluate all genomes to find the best
-    best_in_generation = None
-    best_fitness = -float('inf')
-    
-    for genome_id, genome in genomes:
-        simulation_evaluation(genome, config, visualizer=None)  # No visualization during evaluation
-        # print(genome_id,genome.fitness)
-        # Track the best in this generation
-        if genome.fitness > best_fitness:
-            best_fitness = genome.fitness
-            best_in_generation = genome
-    print(f"Current best fitness: {best_fitness}")
-    # Update visualizer with this generation's results
-    # config.visualizer.update_generation(best_in_generation)
 
 def run_neat(config_file):    
     # Create and store visualizer in config
@@ -37,11 +23,10 @@ def run_neat(config_file):
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
-    population.add_reporter(NewBestReport(run_simulation_curr_1))
-    population.add_reporter(neat.Checkpointer(generation_interval=10))
-    
-    
-    evaluator = ParallelEvaluator(4, eval_function_1)
+    checkpoint_dir = pathlib.Path()/"checkpoints"/"curriculum_1"
+    population.add_reporter(NewBestReport(run_simulation_curr_1, checkpoint_dir))
+    # population.add_reporter(neat.Checkpointer(generation_interval=10))
+    evaluator = ParallelEvaluator(6, eval_function_1)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 1000)

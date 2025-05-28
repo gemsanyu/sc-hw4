@@ -70,13 +70,13 @@ class Spaceship:
 
 
 class Asteroid:
-    def __init__(self, screen:Surface):
+    def __init__(self, screen:Optional[Surface]=None):
         self.x = random.randint(0, WIDTH)
         self.y = random.randint(0, HEIGHT)
         self.radius = random.randint(15, 30)
         self.speed_x = random.uniform(-2, 2)
         self.speed_y = random.uniform(-2, 2)
-        self.screen:Surface = screen
+        self.screen:Optional[Surface] = screen
 
     def move(self):
         self.x = (self.x + self.speed_x) % WIDTH

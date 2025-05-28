@@ -76,6 +76,20 @@ def apply_action(ship:Spaceship, output, minerals)->int:
     num_minerals_mined = ship.mine(minerals)
     return num_minerals_mined
 
+def generate_static_steroids(num_asteroids:int=5, mode:str="horizontal", screen:Optional[Surface]=None)->List[Asteroid]:
+    asteroids: List[Asteroid] = [Asteroid(screen) for _ in range(5)]
+    for ai, asteroid in enumerate(asteroids):
+        asteroid.speed_x = 0
+        asteroid.speed_y = 0
+        asteroid.radius = 20
+        if mode == "horizontal":
+            asteroid.x = WIDTH/(num_asteroids+1) * (ai+1)
+            asteroid.y = HEIGHT/2
+        elif mode == "vertical":
+            asteroid.x = WIDTH/2
+            asteroid.y = HEIGHT/(num_asteroids+1) * (ai+1)
+    return asteroids
+
 def generate_linear_minerals(ship_x:int, ship_y:int, num_minerals:int=5, screen:Optional[Surface]=None)->List[Mineral]:
     seed_mineral = Mineral(screen)
     # Vector from ship to seed mineral
