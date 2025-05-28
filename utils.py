@@ -96,8 +96,9 @@ def generate_linear_minerals(ship_x:int, ship_y:int, num_minerals:int=5, screen:
 
 def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid])->List[Union[int, float]]:
     inputs = []
-    for i in range(8):
-        ray_angle = ship.angle + i * (math.pi/4)
+    num_rays = 24
+    for i in range(num_rays):
+        ray_angle = ship.angle + i * (math.pi/(num_rays/2))
         dist, flag = cast_ray(ship.x, ship.y, ray_angle, asteroids + minerals)
         inputs.append(dist)
         inputs.append(flag)
@@ -128,3 +129,6 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
     # ]
     inputs.append(ship.fuel/100.0)
     return inputs
+
+# def generate_minerals_on_half_side_vertical():
+    
