@@ -1,11 +1,16 @@
 import math
 from typing import List, Optional, Tuple, Union
 
+import neat
 import numba as nb
+import numpy as np
 import pygame
 from miner_objects import DIAG, HEIGHT, WIDTH, Asteroid, Mineral, Spaceship
 from pygame.surface import Surface
 
+
+def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, config: neat.config):
+    return simulation_evaluation(genome, config)
 
 @nb.njit(nb.float64(nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64))
 def ray_circle_intersect(ox:float,
@@ -83,11 +88,11 @@ def generate_static_steroids(num_asteroids:int=5, mode:str="horizontal", screen:
         asteroid.speed_y = 0
         asteroid.radius = 20
         if mode == "horizontal":
-            asteroid.x = WIDTH/(num_asteroids+1) * (ai+1)
+            asteroid.x = WIDTH/(num_asteroids+1) * (ai+1.5)
             asteroid.y = HEIGHT/2
         elif mode == "vertical":
             asteroid.x = WIDTH/2
-            asteroid.y = HEIGHT/(num_asteroids+1) * (ai+1)
+            asteroid.y = HEIGHT/(num_asteroids+1) * (ai+1.5)
     return asteroids
 
 def generate_linear_minerals(ship_x:int, ship_y:int, num_minerals:int=5, screen:Optional[Surface]=None)->List[Mineral]:
@@ -108,6 +113,56 @@ def generate_linear_minerals(ship_x:int, ship_y:int, num_minerals:int=5, screen:
     minerals.append(seed_mineral)
     return minerals
 
+
+def cast_rays_nb(ship_x: float, 
+                 ship_y: float, 
+                 ship_angle: float,
+                 num_rays:int, 
+                 object_coords:np.ndarray, 
+                 obj_radius: np.ndarray, 
+                 obj_flags: np.ndarray,
+                 max_length:float,
+                 dist_flag_arr:np.ndarray)->np.ndarray:
+    angles = ship_angle + np.arange(num_rays) * (math.pi/(num_rays/2))
+    dxs, dys = np.cos(angles), np.sin(angles)
+    closest_t = -9999
+    closest_flag = 0
+    num_objs = obj_radius.shape[0]
+
+    for ri in range(num_rays):
+        for i in range(num_objs):  # mix of minerals & asteroids
+            t = ray_circle_intersect(ship_x, ship_y, dxs[ri], dys[ri], object_coords[i,0], object_coords[i,1], obj_radius[i])
+            if t < -999:
+                continue
+            if closest_t is None or t < closest_t:
+                closest_t = t
+                closest_flag = obj_flags[i]
+
+        if closest_t < -999:
+            closest_t = 99999.
+            closest_flag = 0
+            # no hit
+        # normalize
+        norm_dist = min(1.0, closest_t / max_length)
+        dist_flag_arr[ri*2] = norm_dist
+        dist_flag_arr[ri*2+1] = closest_flag
+        
+    return dist_flag_arr
+
+def cast_ray_nb_caller(ship_x:float, ship_y:float, ship_angle:float, num_rays:int, objects:List[Union[Mineral, Asteroid]])->np.ndarray:
+    dist_flag_arr = np.empty((num_rays*2,), dtype=float)
+    object_coords = np.asanyarray([[obj.x, obj.y] for obj in objects], dtype=float)
+    obj_radius = np.asanyarray([obj.radius for obj in objects], dtype=float)
+    obj_flags = []
+    for obj in objects:
+        if isinstance(obj, Mineral):
+            obj_flags.append(1.)
+        else:
+            obj_flags.append(-1.)
+    obj_flags = np.asanyarray(obj_flags)
+    dist_flag_arr = cast_rays_nb(ship_x, ship_y, ship_angle, num_rays, object_coords, obj_radius, obj_flags, DIAG, dist_flag_arr)    
+    return dist_flag_arr.tolist()
+
 def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid])->List[Union[int, float]]:
     inputs = []
     num_rays = 24
@@ -116,7 +171,15 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
         dist, flag = cast_ray(ship.x, ship.y, ray_angle, asteroids + minerals)
         inputs.append(dist)
         inputs.append(flag)
+    # inputs_v1 = np.asanyarray(inputs)
+    # inputs_v2 = cast_ray_nb_caller(ship.x, ship.y, ship.angle, num_rays, asteroids+minerals)
+    # print(inputs_v1)
+    # print(inputs_v2)
+    # assert np.allclose(inputs_v1, inputs_v2, atol=1e-8)
     inputs += [ship.x/WIDTH, ship.y/HEIGHT]
+    
+    
+    
     closest_mineral = min((m for m in minerals), 
                         key=lambda m: math.hypot(ship.x-m.x, ship.y-m.y), 
                         default=None)

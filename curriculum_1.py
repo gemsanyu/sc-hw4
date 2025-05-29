@@ -9,11 +9,6 @@ from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
 from pygame.surface import Surface
 from utils import apply_action, generate_inputs, generate_linear_minerals
 
-
-def eval_function_1(genome: neat.DefaultGenome, 
-                    config: neat.config):
-    return run_simulation_curr_1(genome, config)
-
 def run_simulation_curr_1(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer=None):
@@ -26,7 +21,10 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     minerals: List[Mineral] = generate_linear_minerals(ship.x, ship.y, screen=screen)
-    asteroids: List[Asteroid] = []
+    asteroids = []
+    # asteroids: List[Asteroid] = [Asteroid(screen=screen)]
+    # asteroids[0].speed_x = 0
+    # asteroids[0].speed_y = 0
     alive_time = 0
     genome.fitness = 0
     idle_time = 0
@@ -55,7 +53,7 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
             idle_time = 0
         
         genome.fitness += num_minerals_mined*10 - 0.1
-        if len(minerals) < 1:  # Replenish minerals
+        if len(minerals) < 2:  # Replenish minerals
             minerals = generate_linear_minerals(ship.x, ship.y, screen=screen)
         
         # Visualization
@@ -84,8 +82,10 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
         if too_idle:
             # genome.fitness -= 100
             break
+        if asteroid_collision:
+            genome.fitness -= 500
         
         if asteroid_collision or out_of_fuel or no_minerals_left or alive_time >= 5000:
             break
-    
+    pygame.quit()
     return genome.fitness

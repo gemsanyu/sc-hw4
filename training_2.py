@@ -4,15 +4,17 @@ import os
 import pathlib
 import pickle
 from typing import Callable, List
+from functools import partial
 
 import neat
 import pygame
-from curriculum_2 import eval_function_2, run_simulation_curr_2
+from curriculum_2 import run_simulation_curr_2
 from custom_reporter import NewBestReport
 from neat.config import Config
 from neat.genome import DefaultGenome
 from neat.parallel import ParallelEvaluator
 from visualizer import TrainingVisualizer
+from utils import eval_function_template
 
 
 def run_neat(config_file):    
@@ -51,8 +53,8 @@ def run_neat(config_file):
     population.population = new_population
     population.species = species_set
     
-
-    evaluator = ParallelEvaluator(6, eval_function_2)
+    eval_function = partial(eval_function_template, run_simulation_curr_2)
+    evaluator = ParallelEvaluator(6, eval_function)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 1000)
