@@ -23,9 +23,10 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
     ship = Spaceship(screen)
     minerals: List[Mineral] = generate_linear_minerals(ship.x, ship.y, screen=screen)
     asteroids = []
-    asteroids: List[Asteroid] = [Asteroid(screen=screen)]
-    asteroids[0].speed_x = 0
-    asteroids[0].speed_y = 0
+    asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    for asteroid in asteroids:
+        asteroid.speed_x = 0
+        asteroid.speed_y = 0
     alive_time = 0
     genome.fitness = 0
     idle_time = 0
@@ -67,7 +68,7 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
                 asteroid.move()
                 asteroid.draw()
             ship.draw()
-            visualizer.draw_stats(screen, genome.fitness, ship.minerals, ship.fuel)
+            visualizer.draw_stats(screen, genome.fitness, ship.minerals, ship)
             pygame.display.flip()
             clock.tick(30)
         

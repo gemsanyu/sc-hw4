@@ -29,7 +29,7 @@ class NewBestReport(BaseReporter):
             self.best_fitness = best_genome.fitness
             self.save_current_best(config, population, species, self.current_generation, best_genome)
             if best_genome.fitness > self.fitness_target:
-                self.fitness_target = best_genome.fitness + 200
+                self.fitness_target = best_genome.fitness# + 200
                 self.simulation_eval(best_genome, config, config.visualizer)
 
     def save_current_best(self, config, population:neat.Population, species_set, generation, best_genome):

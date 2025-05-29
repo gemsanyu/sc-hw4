@@ -7,13 +7,12 @@ import pygame
 from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
                            Spaceship)
 from pygame.surface import Surface
-from utils import (apply_action, generate_inputs, generate_linear_minerals,
-                   generate_static_steroids)
+from utils import apply_action, generate_inputs, generate_linear_minerals
 
 
 def run_simulation_curr_2(genome: neat.DefaultGenome, 
                           config: neat.Config, 
-                          visualizer=None):
+                          visualizer: Optional[Surface]=None):
     pygame.init()
     screen = None
     if visualizer is not None:
@@ -22,8 +21,11 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
     clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
-    minerals: List[Mineral] = [Mineral(screen) for _ in range(2)]
-    asteroids: List[Asteroid] = []
+    minerals: List[Mineral] = [Mineral(screen) for _ in range(5)]
+    asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    for asteroid in asteroids:
+        asteroid.speed_x = 0
+        asteroid.speed_y = 0
     alive_time = 0
     genome.fitness = 0
     idle_time = 0
@@ -38,8 +40,9 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
                 return
         
         
-        
-        inputs = generate_inputs(ship, minerals, asteroids)
+        if screen is not None:
+            screen.fill(BLACK)
+        inputs = generate_inputs(ship, minerals, asteroids, screen)
         # Get actions from network
         output = net.activate(inputs)
         
@@ -48,23 +51,25 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
         num_minerals_mined = apply_action(ship, output, minerals)
         if old_x == ship.x and old_y == ship.y:
             idle_time += 1
+            genome.fitness -= 0.1
         else:
             idle_time = 0
         
         genome.fitness += num_minerals_mined*10 - 0.1
-        if len(minerals) < 1:  # Replenish minerals
-            minerals.extend([Mineral(screen) for _ in range(2)])
+        if len(minerals) < 2:  # Replenish minerals
+            while len(minerals)<5:
+                minerals.append(Mineral(screen))
         
         # Visualization
-        if visualizer:
-            screen.fill(BLACK)
+        if screen is not None:
+            # screen.fill(BLACK)
             for mineral in minerals:
                 mineral.draw()
             for asteroid in asteroids:
                 asteroid.move()
                 asteroid.draw()
             ship.draw()
-            visualizer.draw_stats(screen, genome.fitness, ship.minerals, ship.fuel)
+            visualizer.draw_stats(screen, genome.fitness, ship.minerals, ship)
             pygame.display.flip()
             clock.tick(30)
         
@@ -84,7 +89,7 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
         if asteroid_collision:
             genome.fitness -= 500
             break
-
+        
         if out_of_fuel or no_minerals_left or alive_time >= 5000:
             break
     pygame.quit()

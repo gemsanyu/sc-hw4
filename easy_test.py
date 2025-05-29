@@ -23,9 +23,6 @@ def run_neat(config_file):
                         config_file)
     config.visualizer = TrainingVisualizer(config, run_simulation_curr_1)
     
-    checkpoint_dir = pathlib.Path()/"checkpoints"/"curriculum_2"
-    population = neat.Population(config)
-    
     
     best_genome_filepath = pathlib.Path()/"checkpoints"/"curriculum_1"/"best_genome"
     best_genome = None
