@@ -1,15 +1,15 @@
 ﻿import os
 import pathlib
-from typing import Callable, List
 from functools import partial
+from typing import Callable, List
 
 import neat
 import pygame
 from curriculum_1 import run_simulation_curr_1
 from custom_reporter import NewBestReport
 from neat.parallel import ParallelEvaluator
-from visualizer import TrainingVisualizer
 from utils import eval_function_template
+from visualizer import TrainingVisualizer
 
 
 def run_neat(config_file):    
@@ -29,7 +29,7 @@ def run_neat(config_file):
     population.add_reporter(NewBestReport(run_simulation_curr_1, checkpoint_dir, fitness_target=0))
     # population.add_reporter(neat.Checkpointer(generation_interval=10))
     eval_function = partial(eval_function_template, run_simulation_curr_1)
-    evaluator = ParallelEvaluator(1, eval_function)
+    evaluator = ParallelEvaluator(6, eval_function)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 1000)

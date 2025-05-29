@@ -9,9 +9,10 @@ from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
 from pygame.surface import Surface
 from utils import apply_action, generate_inputs, generate_linear_minerals
 
+
 def run_simulation_curr_1(genome: neat.DefaultGenome, 
                           config: neat.Config, 
-                          visualizer=None):
+                          visualizer: Optional[Surface]=None):
     pygame.init()
     screen = None
     if visualizer is not None:
@@ -22,9 +23,9 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
     ship = Spaceship(screen)
     minerals: List[Mineral] = generate_linear_minerals(ship.x, ship.y, screen=screen)
     asteroids = []
-    # asteroids: List[Asteroid] = [Asteroid(screen=screen)]
-    # asteroids[0].speed_x = 0
-    # asteroids[0].speed_y = 0
+    asteroids: List[Asteroid] = [Asteroid(screen=screen)]
+    asteroids[0].speed_x = 0
+    asteroids[0].speed_y = 0
     alive_time = 0
     genome.fitness = 0
     idle_time = 0
@@ -39,8 +40,9 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
                 return
         
         
-        
-        inputs = generate_inputs(ship, minerals, asteroids)
+        if screen is not None:
+            screen.fill(BLACK)
+        inputs = generate_inputs(ship, minerals, asteroids, screen)
         # Get actions from network
         output = net.activate(inputs)
         
@@ -57,8 +59,8 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
             minerals = generate_linear_minerals(ship.x, ship.y, screen=screen)
         
         # Visualization
-        if visualizer:
-            screen.fill(BLACK)
+        if screen is not None:
+            # screen.fill(BLACK)
             for mineral in minerals:
                 mineral.draw()
             for asteroid in asteroids:
@@ -85,7 +87,7 @@ def run_simulation_curr_1(genome: neat.DefaultGenome,
         if asteroid_collision:
             genome.fitness -= 500
         
-        if asteroid_collision or out_of_fuel or no_minerals_left or alive_time >= 5000:
+        if out_of_fuel or no_minerals_left or alive_time >= 5000:
             break
     pygame.quit()
     return genome.fitness

@@ -5,7 +5,8 @@ import neat
 import numba as nb
 import numpy as np
 import pygame
-from miner_objects import DIAG, HEIGHT, WIDTH, Asteroid, Mineral, Spaceship
+from miner_objects import (DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW, Asteroid,
+                           Mineral, Spaceship)
 from pygame.surface import Surface
 
 
@@ -125,11 +126,12 @@ def cast_rays_nb(ship_x: float,
                  dist_flag_arr:np.ndarray)->np.ndarray:
     angles = ship_angle + np.arange(num_rays) * (math.pi/(num_rays/2))
     dxs, dys = np.cos(angles), np.sin(angles)
-    closest_t = -9999
-    closest_flag = 0
+    
     num_objs = obj_radius.shape[0]
 
     for ri in range(num_rays):
+        closest_t = -9999
+        closest_flag = 0
         for i in range(num_objs):  # mix of minerals & asteroids
             t = ray_circle_intersect(ship_x, ship_y, dxs[ri], dys[ri], object_coords[i,0], object_coords[i,1], obj_radius[i])
             if t < -999:
@@ -163,12 +165,23 @@ def cast_ray_nb_caller(ship_x:float, ship_y:float, ship_angle:float, num_rays:in
     dist_flag_arr = cast_rays_nb(ship_x, ship_y, ship_angle, num_rays, object_coords, obj_radius, obj_flags, DIAG, dist_flag_arr)    
     return dist_flag_arr.tolist()
 
-def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid])->List[Union[int, float]]:
+def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid], screen: Optional[Surface]=None)->List[Union[int, float]]:
     inputs = []
     num_rays = 24
     for i in range(num_rays):
         ray_angle = ship.angle + i * (math.pi/(num_rays/2))
         dist, flag = cast_ray(ship.x, ship.y, ray_angle, asteroids + minerals)
+        dx = math.cos(ray_angle) * dist * DIAG
+        dy = math.sin(ray_angle) * dist * DIAG
+        end_x = ship.x + dx
+        end_y = ship.y + dy
+        if screen is not None:
+            color = WHITE
+            if flag <0:
+                color = RED
+            elif flag>0:
+                color = YELLOW
+            pygame.draw.line(screen, color, (ship.x, ship.y), (end_x, end_y), 1)
         inputs.append(dist)
         inputs.append(flag)
     # inputs_v1 = np.asanyarray(inputs)

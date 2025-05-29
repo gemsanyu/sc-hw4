@@ -10,6 +10,7 @@ from pygame.surface import Surface
 from utils import (apply_action, generate_inputs, generate_linear_minerals,
                    generate_static_steroids)
 
+
 def run_simulation_curr_2(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer=None):
@@ -21,11 +22,8 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
     clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
-    minerals: List[Mineral] = generate_linear_minerals(ship.x, ship.y, screen=screen)
-    asteroids: List[Asteroid] = [Asteroid(screen)]
-    asteroids[0].speed_x = 0
-    asteroids[0].speed_y = 0
-    # exit()
+    minerals: List[Mineral] = [Mineral(screen) for _ in range(2)]
+    asteroids: List[Asteroid] = []
     alive_time = 0
     genome.fitness = 0
     idle_time = 0
@@ -54,8 +52,8 @@ def run_simulation_curr_2(genome: neat.DefaultGenome,
             idle_time = 0
         
         genome.fitness += num_minerals_mined*10 - 0.1
-        if len(minerals) < 2:  # Replenish minerals
-            minerals = generate_linear_minerals(ship.x, ship.y, screen=screen)
+        if len(minerals) < 1:  # Replenish minerals
+            minerals.extend([Mineral(screen) for _ in range(2)])
         
         # Visualization
         if visualizer:
