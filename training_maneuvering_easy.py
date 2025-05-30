@@ -5,7 +5,7 @@ from typing import Callable, List
 
 import neat
 import pygame
-from curriculum_braking import run_braking
+from curriculum_maneuvering import run_maneuvering_1
 from custom_reporter import EarlyStoppingReport
 from neat.parallel import ParallelEvaluator
 from utils import eval_function_template
@@ -13,30 +13,24 @@ from visualizer import TrainingVisualizer
 
 
 def run_neat(config_file):    
-    # Create and store visualizer in config
+    last_checkpoint_filepath = pathlib.Path()/"checkpoints"/"braking"/"best_population_checkpoint"
+    population = neat.Checkpointer.restore_checkpoint(last_checkpoint_filepath.absolute())
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
                         config_file)
-    config.visualizer = TrainingVisualizer(config, run_braking)
-    # Create population
-    population = neat.Population(config)
-    
+    config.visualizer = TrainingVisualizer(config, run_maneuvering_1)
     # Add reporters
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
-    checkpoint_dir = pathlib.Path()/"checkpoints"/"braking"
-    population.add_reporter(EarlyStoppingReport(run_braking, checkpoint_dir, fitness_target=200))
+    checkpoint_dir = pathlib.Path()/"checkpoints"/"maneuvering"
+    population.add_reporter(EarlyStoppingReport(run_maneuvering_1, checkpoint_dir, fitness_target=300))
     # population.add_reporter(neat.Checkpointer(generation_interval=10))
-    eval_function = partial(eval_function_template, run_braking)
+    eval_function = partial(eval_function_template, run_maneuvering_1)
     evaluator = ParallelEvaluator(6, eval_function)
     # Run NEAT
     try:
-        winner = population.run(evaluator.evaluate, 100)
-        # print("\nTraining complete! Final best genome:")
-        # print(f"Fitness: {winner.fitness:.1f}")
-        # print(f"Nodes: {len(winner.nodes)}")
-        # print(f"Connections: {len(winner.connections)}")
+        winner = population.run(evaluator.evaluate, 1000)
     finally:
         pygame.quit()
 
