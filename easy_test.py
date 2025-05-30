@@ -8,7 +8,7 @@ from typing import Callable, List
 
 import neat
 import pygame
-from curriculum_1 import run_simulation_curr_1
+from curriculum_braking import run_braking
 from custom_reporter import NewBestReport
 from neat.config import Config
 from neat.genome import DefaultGenome
@@ -21,14 +21,14 @@ def run_neat(config_file):
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
                         config_file)
-    config.visualizer = TrainingVisualizer(config, run_simulation_curr_1)
+    config.visualizer = TrainingVisualizer(config, run_braking)
     
     
     best_genome_filepath = pathlib.Path()/"checkpoints"/"curriculum_1"/"best_genome"
     best_genome = None
     with gzip.open(best_genome_filepath.absolute()) as f:
         best_genome = pickle.load(f)
-    run_simulation_curr_1(best_genome, config, config.visualizer)
+    run_braking(best_genome, config, config.visualizer)
 
 if __name__ == "__main__":
     local_dir = os.path.dirname(__file__)

@@ -10,8 +10,12 @@ from miner_objects import (DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW, Asteroid,
 from pygame.surface import Surface
 
 
-def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, config: neat.config):
-    return simulation_evaluation(genome, config)
+def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, config: neat.config, num_samples:int=3):
+    total_fitness = 0
+    for n in range(num_samples):
+        total_fitness += simulation_evaluation(genome, config) 
+    avg_fitness = total_fitness/num_samples
+    return avg_fitness
 
 @nb.njit(nb.float64(nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64))
 def ray_circle_intersect(ox:float,
@@ -198,6 +202,8 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
                         default=None)
     if closest_mineral is not None:
         inputs += [closest_mineral.x/WIDTH, closest_mineral.y/HEIGHT]
+    else:
+        inputs += [-1, -1]
     
     # closest_asteroid = min((a for a in asteroids), 
     #                         key=lambda a: math.hypot(ship.x-a.x, ship.y-a.y),
