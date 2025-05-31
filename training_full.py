@@ -33,7 +33,7 @@ def run_neat(config_file):
     evaluator = ParallelEvaluator(6, eval_function)
     # Run NEAT
     try:
-        winner = population.run(evaluator.evaluate, 100)
+        winner = population.run(evaluator.evaluate, 10000)
     finally:
         pygame.quit()
 
