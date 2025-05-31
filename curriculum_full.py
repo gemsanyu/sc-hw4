@@ -82,7 +82,7 @@ def run_full(genome: neat.DefaultGenome,
         # no_minerals_left = not minerals and ship.minerals == 0
         too_idle = idle_time >= MAX_IDLE_TIME
         if too_idle:
-            reward -= -500
+            reward += -500
             break
         if asteroid_collision:
             reward -= 500

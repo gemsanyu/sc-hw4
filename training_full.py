@@ -6,7 +6,7 @@ from typing import Callable, List
 import neat
 import pygame
 from curriculum_full import run_full
-from custom_reporter import EarlyStoppingReport
+from custom_reporter import NewBestReport
 from neat.parallel import ParallelEvaluator
 from utils import eval_function_template
 from visualizer import TrainingVisualizer
@@ -26,17 +26,14 @@ def run_neat(config_file):
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
     checkpoint_dir = pathlib.Path()/"checkpoints"/"full"
-    population.add_reporter(EarlyStoppingReport(run_full, checkpoint_dir, fitness_target=200))
+    log_dir = pathlib.Path()/"logs"/"full"
+    population.add_reporter(NewBestReport(checkpoint_dir, log_dir))
     # population.add_reporter(neat.Checkpointer(generation_interval=10))
     eval_function = partial(eval_function_template, run_full)
-    evaluator = ParallelEvaluator(8, eval_function)
+    evaluator = ParallelEvaluator(6, eval_function)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 100)
-        # print("\nTraining complete! Final best genome:")
-        # print(f"Fitness: {winner.fitness:.1f}")
-        # print(f"Nodes: {len(winner.nodes)}")
-        # print(f"Connections: {len(winner.connections)}")
     finally:
         pygame.quit()
 
