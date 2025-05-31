@@ -25,12 +25,13 @@ class NewBestReport(BaseReporter):
         self.current_generation = generation
     
     def post_evaluate(self, config, population, species, best_genome):
+        
         if self.best_fitness < best_genome.fitness:
             self.best_fitness = best_genome.fitness
             self.save_current_best(config, population, species, self.current_generation, best_genome)
+            self.simulation_eval(best_genome, config, config.visualizer)
             if best_genome.fitness > self.fitness_target:
                 self.fitness_target = best_genome.fitness# + 200
-                self.simulation_eval(best_genome, config, config.visualizer)
 
     def save_current_best(self, config, population:neat.Population, species_set, generation, best_genome):
         """ Save the current simulation state. """
@@ -66,12 +67,12 @@ class EarlyStoppingReport(BaseReporter):
         self.current_generation = generation
     
     def post_evaluate(self, config, population, species, best_genome):
-        self.simulation_eval(best_genome, config, config.visualizer)
+        # self.simulation_eval(best_genome, config, config.visualizer)
         if self.best_fitness < best_genome.fitness:
             self.best_fitness = best_genome.fitness
             self.save_current_best(config, population, species, self.current_generation, best_genome)
-            if best_genome.fitness >= self.fitness_target:
-                exit()
+            # if best_genome.fitness >= self.fitness_target:
+            #     exit()
 
     def save_current_best(self, config, population:neat.Population, species_set, generation, best_genome):
         """ Save the current simulation state. """
