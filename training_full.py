@@ -11,6 +11,8 @@ from neat.parallel import ParallelEvaluator
 from utils import eval_function_template
 from visualizer import TrainingVisualizer
 
+from encoder import Encoder
+
 
 def run_neat(config_file):    
     # Create and store visualizer in config
@@ -30,7 +32,7 @@ def run_neat(config_file):
     population.add_reporter(NewBestReport(checkpoint_dir, log_dir))
     # population.add_reporter(neat.Checkpointer(generation_interval=10))
     eval_function = partial(eval_function_template, run_full)
-    evaluator = ParallelEvaluator(16, eval_function)
+    evaluator = ParallelEvaluator(4, eval_function)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 10000)

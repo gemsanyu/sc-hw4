@@ -2,24 +2,31 @@ import math
 from typing import List, Optional, Tuple, Union
 import random
 
+import torch
 import neat
 import neat.config
 import pygame
 from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
                            Spaceship)
 from pygame.surface import Surface
-from utils import apply_action, generate_inputs
+from utils import apply_action, generate_inputs, setup_encoder
 
+@torch.no_grad()
 def run_full(genome: neat.DefaultGenome, 
-                          config: neat.Config, 
-                          visualizer: Optional[Surface]=None):
+                config: neat.Config, 
+                visualizer: Optional[Surface]=None):
+    
+    torch.set_num_threads(1)       # Limit intra-op parallelism (e.g., matrix mult)
+    # torch.set_num_interop_threads(1) 
     pygame.init()
     screen = None
     if visualizer is not None:
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
     clock = pygame.time.Clock()
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    encoder = setup_encoder()
+    encoder.eval()
+    policy = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     asteroids = [Asteroid(screen) for _ in range(8)]
     minerals = [Mineral(screen) for _ in range(5)]
@@ -40,9 +47,13 @@ def run_full(genome: neat.DefaultGenome,
         
         if screen is not None:
             screen.fill(BLACK)
-        inputs = generate_inputs(ship, minerals, asteroids, screen)
+        ship_data, asteroids_data, minerals_data = generate_inputs(ship, minerals, asteroids)
+        obj_embeds, graph_embeds = encoder(ship_data, asteroids_data, minerals_data)
+        ship_embed = obj_embeds[0]
+        graph_embed = graph_embeds[0]
+        inputs = torch.cat((ship_embed, graph_embed)).tolist()
         # Get actions from network
-        output = net.activate(inputs)
+        output = policy.activate(inputs)
         
         # Execute actions
         old_x, old_y = ship.x, ship.y
@@ -87,16 +98,7 @@ def run_full(genome: neat.DefaultGenome,
         if asteroid_collision:
             reward -= 500
             break
-        # or no_minerals_left
-        # if len(minerals)>0:
-        #     reward -= 0.1
         if out_of_fuel or alive_time >= 5000:
             break
-    # if ship.minerals < 1:
-    #     reward -= 500
-    # elif len(minerals)==1:
-    #     reward += 100
-    # elif len(minerals)==0:
-    #     reward += 500
     pygame.quit()
     return reward
