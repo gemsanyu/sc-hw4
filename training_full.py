@@ -32,7 +32,7 @@ def run_neat(config_file):
     population.add_reporter(NewBestReport(checkpoint_dir, log_dir))
     # population.add_reporter(neat.Checkpointer(generation_interval=10))
     eval_function = partial(eval_function_template, run_full)
-    evaluator = ParallelEvaluator(4, eval_function)
+    evaluator = ParallelEvaluator(8, eval_function)
     # Run NEAT
     try:
         winner = population.run(evaluator.evaluate, 10000)
