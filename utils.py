@@ -8,16 +8,6 @@ import pygame
 from miner_objects import (DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW, Asteroid,
                            Mineral, Spaceship)
 from pygame.surface import Surface
-from encoder import Encoder
-import torch
-
-def setup_encoder()->Encoder:
-    encoder = Encoder()
-    encoder_state_dict = torch.load("encoder.pth")
-    encoder.load_state_dict(encoder_state_dict)
-    return encoder
-
-
 
 
 def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, config: neat.config, num_samples:int=3):
@@ -86,10 +76,10 @@ def cast_ray(ox:float,
 
 def apply_action(ship:Spaceship, output, minerals)->int:
     ship.angle += (output[0] * 2 - 1) * 0.1  # Turn (-1 to 1)
-    dx, dy = 0,0
-    if output[1] > 0.5:  # Thrust
-        dx = ship.speed * math.cos(ship.angle)
-        dy = ship.speed * math.sin(ship.angle)
+    # dx, dy = 0,0
+    # if output[1] > 0.5:  # Thrust
+    dx = ship.speed * math.cos(ship.angle)
+    dy = ship.speed * math.sin(ship.angle)
     ship.move(dx, dy)
     # num_minerals_mined: int = 0
     # if output[2] > 0.5:  # Mine
@@ -179,23 +169,39 @@ def cast_ray_nb_caller(ship_x:float, ship_y:float, ship_angle:float, num_rays:in
     dist_flag_arr = cast_rays_nb(ship_x, ship_y, ship_angle, num_rays, object_coords, obj_radius, obj_flags, DIAG, dist_flag_arr)    
     return dist_flag_arr.tolist()
 
-def generate_inputs(ship: Spaceship, 
-                    minerals: List[Mineral], 
-                    asteroids: List[Asteroid])->Tuple[torch.Tensor,torch.Tensor,torch.Tensor]:
-    ship_data = [ship.x/WIDTH, ship.y/HEIGHT, ship.fuel/100, math.sin(ship.angle), math.cos(ship.angle)]
-    ship_data = torch.as_tensor(ship_data, dtype=torch.float32)
-    asteroids_data = []
-    for asteroid in asteroids:
-        ad = [asteroid.x/WIDTH, asteroid.y/WIDTH, asteroid.speed_x/WIDTH, asteroid.speed_y/HEIGHT, asteroid.radius/DIAG]
-        asteroids_data.append(ad)
-    asteroids_data = torch.as_tensor(asteroids_data, dtype=torch.float32)
-    minerals_data = []
-    for mineral in minerals:
-        md = [mineral.x/WIDTH, mineral.y/HEIGHT]
-        minerals_data.append(md)
-    minerals_data = torch.as_tensor(minerals_data, dtype=torch.float32)
+def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid], screen: Optional[Surface]=None)->List[Union[int, float]]:
+    inputs = []
+    num_rays = 12
+    for i in range(num_rays):
+        ray_angle = ship.angle + i * (math.pi/(num_rays/2))
+        dist, flag = cast_ray(ship.x, ship.y, ray_angle, asteroids + minerals)
+        dx = math.cos(ray_angle) * dist * DIAG
+        dy = math.sin(ray_angle) * dist * DIAG
+        end_x = ship.x + dx
+        end_y = ship.y + dy
+        if screen is not None:
+            color = WHITE
+            if flag <0:
+                color = RED
+            elif flag>0:
+                color = YELLOW
+            pygame.draw.line(screen, color, (ship.x, ship.y), (end_x, end_y), 1)
+        inputs.append(dist)
+        inputs.append(flag)
+    inputs += [math.sin(ship.angle), math.cos(ship.angle)]
     
-    return ship_data, asteroids_data, minerals_data
-
-# def generate_minerals_on_half_side_vertical():
     
+    closest_mineral = min((m for m in minerals), 
+                        key=lambda m: math.hypot(ship.x-m.x, ship.y-m.y), 
+                        default=None)
+    if closest_mineral is not None:
+        dx = closest_mineral.x-ship.x
+        dy = closest_mineral.y-ship.y
+        m_angle = math.atan2(dx,dy)
+        dist = math.hypot(closest_mineral.x-ship.x, closest_mineral.y-ship.y)/DIAG
+        inputs += [dist, math.sin(m_angle), math.cos(m_angle)]
+    else:
+        inputs += [1, 0, 0]
+    
+    inputs.append(ship.fuel/100.0)
+    return inputs

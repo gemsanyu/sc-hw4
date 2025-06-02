@@ -1,5 +1,4 @@
 import math
-import random
 from typing import List, Optional, Tuple, Union
 
 import neat
@@ -8,10 +7,20 @@ import pygame
 from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
                            Spaceship)
 from pygame.surface import Surface
-from utils import apply_action, generate_inputs
+from utils import apply_action, generate_inputs, generate_linear_minerals
 
 
-def run_full(genome: neat.DefaultGenome, 
+def generate_minerals_in_front_of_asteroid(sx, sy, ax, ay, screen, num_minerals:int)->List[Mineral]:
+    minerals: List[Mineral] = [Mineral(screen) for _ in range(num_minerals)]
+    dx, dy = ax - sx, ay-sy
+    num_minerals = len(minerals)
+    for i, mineral in enumerate(minerals):
+        mineral.x = sx + dx*0.8*(i+1)/num_minerals
+        mineral.y = sy + dy*0.8*(i+1)/num_minerals
+    return minerals
+    
+
+def run_braking(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
     pygame.init()
@@ -22,8 +31,13 @@ def run_full(genome: neat.DefaultGenome,
     clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
-    asteroids = [Asteroid(screen) for _ in range(8)]
-    minerals = [Mineral(screen) for _ in range(5)]
+    asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    while math.hypot(ship.x-asteroids[0].x, ship.y-asteroids[0].y) <= 10*ship.radius:
+        asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    for asteroid in asteroids:
+        asteroid.speed_x = 0
+        asteroid.speed_y = 0
+    minerals: List[Mineral] = generate_minerals_in_front_of_asteroid(ship.x, ship.y, asteroids[0].x, asteroids[0].y, screen, num_minerals=3)
     
     alive_time = 0
     idle_time = 0
@@ -49,15 +63,11 @@ def run_full(genome: neat.DefaultGenome,
         old_x, old_y = ship.x, ship.y
         num_minerals_mined = apply_action(ship, output, minerals)
         if old_x == ship.x and old_y == ship.y:
-            reward -= 0.2
             idle_time += 1
         else:
             idle_time = 0
         
         reward += num_minerals_mined*20
-        if len(minerals) <= 2:
-            while len(minerals) < 5:
-                minerals.append(Mineral(screen))
 
         # Visualization
         if screen is not None:
@@ -83,21 +93,19 @@ def run_full(genome: neat.DefaultGenome,
         # no_minerals_left = not minerals and ship.minerals == 0
         too_idle = idle_time >= MAX_IDLE_TIME
         if too_idle:
-            reward += -500
+            reward = -500
             break
         if asteroid_collision:
             reward -= 500
             break
         # or no_minerals_left
-        # if len(minerals)>0:
-        #     reward -= 0.1
-        if out_of_fuel or alive_time >= 5000:
+        if len(minerals)>0:
+            reward -= 0.1
+        if out_of_fuel  or alive_time >= 1000:
             break
-    # if ship.minerals < 1:
-    #     reward -= 500
-    # elif len(minerals)==1:
-    #     reward += 100
-    # elif len(minerals)==0:
-    #     reward += 500
+    if ship.minerals < 1:
+        reward -= 500
+    elif ship.minerals == 3:
+        reward += 100
     pygame.quit()
     return reward

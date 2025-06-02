@@ -29,14 +29,16 @@ class TrainingVisualizer:
                 self.simulation_evaluation(best_genome, self.config, visualizer=self) 
         print(f"Generation {self.generation} best: {best_genome.fitness:.1f}")
 
-    def draw_stats(self, screen, fitness, minerals, ship):
+    def draw_stats(self, screen, fitness, minerals, ship, output):
         stats = [
-            f"Gen: {self.generation}"
+            f"Gen: {self.generation}",
             f"Ship Position {ship.x:.1f},{ship.y:.1f}",
             f"Fitness: {fitness:.1f}",
             # f"Best: {self.best_fitness:.1f}",
             f"Minerals: {minerals}",
             f"Fuel: {ship.fuel:.1f}",
+            f"Output[0]: {output[0]:.2f}"
+            # f"Output[1]: {output[1]:.2f}"
         ]
         
         for i, stat in enumerate(stats):

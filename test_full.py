@@ -15,7 +15,7 @@ def run_neat(config_file):
     config.visualizer = TrainingVisualizer(config, run_full)
     
     
-    best_genome_filepath = pathlib.Path()/"checkpoints"/"full"/"best_genome"
+    best_genome_filepath = pathlib.Path()/"checkpoints"/"maneuvering_hard"/"best_genome"
     best_genome = None
     with gzip.open(best_genome_filepath.absolute()) as f:
         best_genome = pickle.load(f)
