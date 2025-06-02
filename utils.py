@@ -17,6 +17,68 @@ def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, co
     avg_fitness = total_fitness/num_samples
     return avg_fitness
 
+@nb.njit(
+    nb.float64(
+        nb.float64,  # ox: ray origin x
+        nb.float64,  # oy: ray origin y
+        nb.float64,  # dx: ray direction x (normalized)
+        nb.float64,  # dy: ray direction y (normalized)
+        nb.float64,  # cx: circle center x
+        nb.float64,  # cy: circle center y
+        nb.float64,  # r: circle radius
+        nb.float64,  # W: world width
+        nb.float64   # H: world height
+    )
+)
+def ray_circle_intersect_toroidal(ox, oy, dx, dy, cx, cy, r, W, H):
+    """
+    Compute the intersection of a ray (origin (ox, oy), direction (dx, dy))
+    with a circle of radius r located at (cx, cy) *in a toroidal world of size W×H*.
+    
+    Returns:
+      - The smallest non-negative t along the ray so that (ox + t·dx, oy + t·dy) 
+        lies on the perimeter of some copy of the circle.
+      - If no forward intersection exists, returns -9999.0.
+    """
+
+    t_min = 9999.0  # Large sentinel: “no intersection yet”
+
+    # Loop over all 3×3 = 9 possible wrapped copies of the circle
+    for dx_wrap in (-1.0, 0.0, 1.0):
+        for dy_wrap in (-1.0, 0.0, 1.0):
+            # Wrap the circle center by (dx_wrap * W, dy_wrap * H)
+            cx_wrapped = cx + dx_wrap * W
+            cy_wrapped = cy + dy_wrap * H
+
+            # Compute quadratic coefficients for intersection ray–circle
+            fx = ox - cx_wrapped
+            fy = oy - cy_wrapped
+            a = 1.0  # because (dx,dy) is assumed normalized
+            b = 2.0 * (fx * dx + fy * dy)
+            c = fx * fx + fy * fy - r * r
+
+            # Discriminant
+            disc = b * b - 4.0 * a * c
+            if disc < 0.0:
+                continue  # no real intersection with this wrapped copy
+
+            sqrt_disc = math.sqrt(disc)
+            # Two possible solutions along the ray
+            t1 = (-b - sqrt_disc) / (2.0 * a)
+            t2 = (-b + sqrt_disc) / (2.0 * a)
+
+            # Pick the smallest non-negative t
+            if t1 >= 0.0 and t1 < t_min:
+                t_min = t1
+            if t2 >= 0.0 and t2 < t_min:
+                t_min = t2
+
+    if t_min < 9999.0:
+        return t_min
+    else:
+        return -9999.0  # no forward intersection found
+
+
 @nb.njit(nb.float64(nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64,nb.float64))
 def ray_circle_intersect(ox:float,
                          oy:float,
@@ -60,7 +122,7 @@ def cast_ray(ox:float,
     closest_flag = 0
 
     for obj in objects:  # mix of minerals & asteroids
-        t = ray_circle_intersect(ox, oy, dx, dy, obj.x, obj.y, obj.radius)
+        t = ray_circle_intersect_toroidal(ox, oy, dx, dy, obj.x, obj.y, obj.radius, WIDTH, HEIGHT)
         if t < -999:
             continue
         if closest_t is None or t < closest_t:
@@ -75,7 +137,9 @@ def cast_ray(ox:float,
 
 
 def apply_action(ship:Spaceship, output, minerals)->int:
-    ship.angle += (output[0] * 2 - 1) * 0.1  # Turn (-1 to 1)
+    # ship.angle += (output[0] * 2 - 1) * 0.1  # Turn (-1 to 1)
+    d_angle = max(min(output[0], 0.5), -0.5)
+    ship.angle += d_angle
     # dx, dy = 0,0
     # if output[1] > 0.5:  # Thrust
     dx = ship.speed * math.cos(ship.angle)
@@ -171,7 +235,7 @@ def cast_ray_nb_caller(ship_x:float, ship_y:float, ship_angle:float, num_rays:in
 
 def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[Asteroid], screen: Optional[Surface]=None)->List[Union[int, float]]:
     inputs = []
-    num_rays = 12
+    num_rays = 24
     for i in range(num_rays):
         ray_angle = ship.angle + i * (math.pi/(num_rays/2))
         dist, flag = cast_ray(ship.x, ship.y, ray_angle, asteroids + minerals)
@@ -191,17 +255,17 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
     inputs += [math.sin(ship.angle), math.cos(ship.angle)]
     
     
-    closest_mineral = min((m for m in minerals), 
-                        key=lambda m: math.hypot(ship.x-m.x, ship.y-m.y), 
-                        default=None)
-    if closest_mineral is not None:
-        dx = closest_mineral.x-ship.x
-        dy = closest_mineral.y-ship.y
-        m_angle = math.atan2(dx,dy)
-        dist = math.hypot(closest_mineral.x-ship.x, closest_mineral.y-ship.y)/DIAG
-        inputs += [dist, math.sin(m_angle), math.cos(m_angle)]
-    else:
-        inputs += [1, 0, 0]
+    # closest_mineral = min((m for m in minerals), 
+    #                     key=lambda m: math.hypot(ship.x-m.x, ship.y-m.y), 
+    #                     default=None)
+    # if closest_mineral is not None:
+    #     dx = closest_mineral.x-ship.x
+    #     dy = closest_mineral.y-ship.y
+    #     m_angle = math.atan2(dx,dy)
+    #     dist = math.hypot(closest_mineral.x-ship.x, closest_mineral.y-ship.y)/DIAG
+    #     inputs += [dist, math.sin(m_angle), math.cos(m_angle)]
+    # else:
+    #     inputs += [1, 0, 0]
     
     inputs.append(ship.fuel/100.0)
     return inputs

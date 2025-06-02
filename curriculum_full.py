@@ -87,7 +87,7 @@ def run_full(genome: neat.DefaultGenome,
             break
         if asteroid_collision:
             reward -= 500
-            break
+            # break
         # or no_minerals_left
         # if len(minerals)>0:
         #     reward -= 0.1
