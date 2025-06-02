@@ -32,7 +32,7 @@ def run_neat(config_file):
     evaluator = ParallelEvaluator(12, eval_function)
     # Run NEAT
     try:
-        winner = population.run(evaluator.evaluate, 100)
+        winner = population.run(evaluator.evaluate, 200)
         # print("\nTraining complete! Final best genome:")
         # print(f"Fitness: {winner.fitness:.1f}")
         # print(f"Nodes: {len(winner.nodes)}")

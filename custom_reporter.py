@@ -71,8 +71,8 @@ class EarlyStoppingReport(BaseReporter):
             self.simulation_eval(best_genome, config, config.visualizer)
             self.best_fitness = best_genome.fitness
             self.save_current_best(config, population, species, self.current_generation, best_genome)
-            # if best_genome.fitness >= self.fitness_target:
-            #     exit()
+            if best_genome.fitness >= self.fitness_target:
+                exit()
 
     def save_current_best(self, config, population:neat.Population, species_set, generation, best_genome):
         """ Save the current simulation state. """

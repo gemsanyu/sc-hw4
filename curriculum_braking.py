@@ -20,6 +20,16 @@ def generate_minerals_in_front_of_asteroid(sx, sy, ax, ay, screen, num_minerals:
     return minerals
     
 
+def generate_linear_asteroid_minerals(ship:Spaceship, num_minerals:int, screen=None):
+    asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    while math.hypot(ship.x-asteroids[0].x, ship.y-asteroids[0].y) <= 10*ship.radius:
+        asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
+    for asteroid in asteroids:
+        asteroid.speed_x = 0
+        asteroid.speed_y = 0
+    minerals: List[Mineral] = generate_minerals_in_front_of_asteroid(ship.x, ship.y, asteroids[0].x, asteroids[0].y, screen, num_minerals=num_minerals)
+    return asteroids, minerals
+
 def run_braking(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
@@ -31,13 +41,7 @@ def run_braking(genome: neat.DefaultGenome,
     clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
-    asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
-    while math.hypot(ship.x-asteroids[0].x, ship.y-asteroids[0].y) <= 10*ship.radius:
-        asteroids: List[Asteroid] = [Asteroid(screen=screen) for _ in range(1)]
-    for asteroid in asteroids:
-        asteroid.speed_x = 0
-        asteroid.speed_y = 0
-    minerals: List[Mineral] = generate_minerals_in_front_of_asteroid(ship.x, ship.y, asteroids[0].x, asteroids[0].y, screen, num_minerals=3)
+    asteroids, minerals = generate_linear_asteroid_minerals(ship, 3, screen)
     
     alive_time = 0
     idle_time = 0
@@ -90,6 +94,8 @@ def run_braking(genome: neat.DefaultGenome,
         if closest_asteroid is not None:        
             asteroid_collision = math.hypot(ship.x-closest_asteroid.x, ship.y-closest_asteroid.y) < ship.radius + closest_asteroid.radius
         out_of_fuel = ship.fuel <= 0
+        if len(minerals)==0:
+            asteroids, minerals = generate_linear_asteroid_minerals(ship, 3, screen)
         # no_minerals_left = not minerals and ship.minerals == 0
         too_idle = idle_time >= MAX_IDLE_TIME
         if too_idle:
@@ -105,7 +111,7 @@ def run_braking(genome: neat.DefaultGenome,
             break
     if ship.minerals < 1:
         reward -= 500
-    elif ship.minerals == 3:
-        reward += 100
+    # elif ship.minerals == 3:
+    #     reward += 100
     pygame.quit()
     return reward
