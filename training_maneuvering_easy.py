@@ -15,6 +15,9 @@ from visualizer import TrainingVisualizer
 def run_neat(config_file):    
     last_checkpoint_filepath = pathlib.Path()/"checkpoints"/"braking"/"best_population_checkpoint"
     population = neat.Checkpointer.restore_checkpoint(last_checkpoint_filepath.absolute())
+    # Reset stagnation history
+    for species in population.species.species.values():
+        species.last_improved = population.generation
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
                         config_file)

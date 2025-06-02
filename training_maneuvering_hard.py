@@ -15,7 +15,9 @@ from visualizer import TrainingVisualizer
 def run_neat(config_file):    
     last_checkpoint_filepath = pathlib.Path()/"checkpoints"/"maneuvering_easy"/"best_population_checkpoint"
     population = neat.Checkpointer.restore_checkpoint(last_checkpoint_filepath.absolute())
-    # Add reporters
+    # Reset stagnation history
+    for species in population.species.species.values():
+        species.last_improved = population.generation# Add reporters
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)

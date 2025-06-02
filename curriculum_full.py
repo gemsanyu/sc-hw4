@@ -42,6 +42,8 @@ def run_full(genome: neat.DefaultGenome,
         if screen is not None:
             screen.fill(BLACK)
         inputs = generate_inputs(ship, minerals, asteroids, screen)
+        if inputs[1] == 1:
+            reward += max((1-inputs[0])*0.5, 0.01)
         # Get actions from network
         output = net.activate(inputs)
         
@@ -49,12 +51,12 @@ def run_full(genome: neat.DefaultGenome,
         old_x, old_y = ship.x, ship.y
         num_minerals_mined = apply_action(ship, output, minerals)
         if old_x == ship.x and old_y == ship.y:
-            reward -= 0.2
+            # reward -= 0.2
             idle_time += 1
         else:
             idle_time = 0
         
-        reward += num_minerals_mined*20
+        reward += num_minerals_mined*10
         if len(minerals) <= 2:
             while len(minerals) < 5:
                 minerals.append(Mineral(screen))
@@ -86,8 +88,8 @@ def run_full(genome: neat.DefaultGenome,
             reward += -500
             break
         if asteroid_collision:
-            reward -= 500
-            # break
+            # reward -= 500
+            break
         # or no_minerals_left
         # if len(minerals)>0:
         #     reward -= 0.1

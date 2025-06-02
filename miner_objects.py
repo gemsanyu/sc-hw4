@@ -52,7 +52,7 @@ class Spaceship:
                 minerals.remove(mineral)
                 self.minerals += 1
                 num_minerals_mined += 1
-                self.fuel = min(100, self.fuel + 10)
+                self.fuel = min(100, self.fuel + 15)
         return num_minerals_mined
     
     
