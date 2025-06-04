@@ -1,20 +1,18 @@
-import pickle
-import pygame
-import neat
+import gzip
 import math
 import os
-import gzip
-from typing import List, Tuple, Union, Optional
-from pygame.surface import Surface
+import pickle
+from typing import List, Optional, Tuple, Union
 
+import neat
+import pygame
 #from miner import Spaceship, Mineral, Asteroid  # Import your game classes random
 # from miner_harness import Spaceship, Mineral, Asteroid  # Import your game classes fixed locations
 # from miner_harness2 import Spaceship, Mineral, Asteroid 
-from miner_harness3 import Spaceship, Mineral, Asteroid 
-
-from miner_objects import WIDTH, DIAG, HEIGHT, RED, YELLOW, BLUE, WHITE, BLACK
+from miner_harness3 import Asteroid, Mineral, Spaceship
+from miner_objects import BLACK, BLUE, DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW
+from pygame.surface import Surface
 from utils import apply_action, ray_circle_intersect_toroidal
-
 
 
 def load_trained_model(filename):
@@ -105,7 +103,7 @@ def run_harness_3(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
                 running = False
         
         
-        inputs = generate_inputs(ship, minerals, asteroids, screen)
+        inputs = generate_inputs(ship, minerals, asteroids)
         
         # Get network output
         output = net.activate(inputs)
