@@ -68,7 +68,7 @@ class EarlyStoppingReport(BaseReporter):
     
     def post_evaluate(self, config, population, species, best_genome):
         # self.simulation_eval(best_genome, config, True)
-        self.simulation_eval(best_genome, config, config.visualizer)
+        # self.simulation_eval(best_genome, config, config.visualizer)
         if self.best_fitness < best_genome.fitness:
             self.best_fitness = best_genome.fitness
             self.save_current_best(config, population, species, self.current_generation, best_genome)
