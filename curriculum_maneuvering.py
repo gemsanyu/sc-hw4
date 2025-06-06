@@ -70,12 +70,14 @@ def generate_alternating_minerals_and_asteroids(sx, sy, screen)->Tuple[List[Mine
 def run_maneuvering_1(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
-    pygame.init()
+    
     screen = None
+    clock = None
     if visualizer is not None:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
-    clock = pygame.time.Clock()
+        clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     
@@ -102,10 +104,11 @@ def run_maneuvering_1(genome: neat.DefaultGenome,
         alive_time += 1
         
         # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
+        if screen is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
         
         
         if screen is not None:
@@ -162,19 +165,22 @@ def run_maneuvering_1(genome: neat.DefaultGenome,
         reward -= 500
     elif len(minerals)==0:
         reward += 100
-    pygame.quit()
+    if screen is not None:
+        pygame.quit()
     return reward
 
 
 def run_maneuvering_2(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
-    pygame.init()
+   
     screen = None
+    clock = None
     if visualizer is not None:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
-    clock = pygame.time.Clock()
+        clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     minerals, asteroids = generate_alternating_minerals_and_asteroids(ship.x, ship.y, screen)
@@ -188,10 +194,11 @@ def run_maneuvering_2(genome: neat.DefaultGenome,
         alive_time += 1
         
         # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
+        if screen is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
         
         
         if screen is not None:
@@ -250,5 +257,6 @@ def run_maneuvering_2(genome: neat.DefaultGenome,
         reward += 100
     elif len(minerals)==0:
         reward += 500
-    pygame.quit()
+    if screen is not None:
+        pygame.quit()
     return reward

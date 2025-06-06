@@ -7,7 +7,7 @@ import neat
 import pygame
 from curriculum_full import run_full
 from custom_reporter import EarlyStoppingReport, NewBestReport
-from neat.parallel import ParallelEvaluator
+from parallel import ParallelEvaluator
 from utils import eval_function_template
 from visualizer import TrainingVisualizer
 

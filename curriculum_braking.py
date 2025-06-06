@@ -33,12 +33,14 @@ def generate_linear_asteroid_minerals(ship:Spaceship, num_minerals:int, screen=N
 def run_braking(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
-    pygame.init()
+    
     screen = None
+    clock = None
     if visualizer is not None:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
-    clock = pygame.time.Clock()
+        clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     asteroids, minerals = generate_linear_asteroid_minerals(ship, 3, screen)
@@ -51,10 +53,11 @@ def run_braking(genome: neat.DefaultGenome,
         alive_time += 1
         
         # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
+        if screen is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
         
         
         if screen is not None:
@@ -113,5 +116,6 @@ def run_braking(genome: neat.DefaultGenome,
         reward -= 500
     # elif ship.minerals == 3:
     #     reward += 100
-    pygame.quit()
+    if screen is not None:
+        pygame.quit()
     return reward

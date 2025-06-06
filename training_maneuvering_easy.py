@@ -7,7 +7,7 @@ import neat
 import pygame
 from curriculum_maneuvering import run_maneuvering_1
 from custom_reporter import EarlyStoppingReport
-from neat.parallel import ParallelEvaluator
+from parallel import ParallelEvaluator
 from utils import eval_function_template
 from visualizer import TrainingVisualizer
 

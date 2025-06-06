@@ -91,7 +91,7 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
     
     # Game setup
     ship = Spaceship(screen)
-    minerals = [Mineral(screen) for _ in range(len(Mineral._coordinates))]
+    minerals = [Mineral(screen) for _ in range(5)]
     asteroids = [Asteroid(screen) for _ in range(len(Asteroid._coordinates))]
     font = pygame.font.SysFont(None, 24)
     alive_time=0
@@ -113,6 +113,8 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
         output = net.activate(inputs)
         num_minerals_mined = apply_action(ship, output, minerals)
         successful_minings += num_minerals_mined
+        if len(minerals) < 3:  # Spawn new minerals if too few
+                minerals.append(Mineral(screen))
         
         if ship.fuel <=0:
             running = False
@@ -150,7 +152,7 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
         clock.tick(30)
 
     running=True
-    while running:
+    while running and screen is not None:
         
         # Handle events
         for event in pygame.event.get():

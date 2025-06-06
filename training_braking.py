@@ -7,7 +7,7 @@ import neat
 import pygame
 from curriculum_braking import run_braking
 from custom_reporter import EarlyStoppingReport
-from neat.parallel import ParallelEvaluator
+from parallel import ParallelEvaluator
 from utils import eval_function_template
 from visualizer import TrainingVisualizer
 

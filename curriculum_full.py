@@ -14,12 +14,13 @@ from utils import apply_action, generate_inputs
 def run_full(genome: neat.DefaultGenome, 
                           config: neat.Config, 
                           visualizer: Optional[Surface]=None):
-    pygame.init()
     screen = None
+    clock = None
     if visualizer is not None:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
-    clock = pygame.time.Clock()
+        clock = pygame.time.Clock()
     net = neat.nn.FeedForwardNetwork.create(genome, config)
     ship = Spaceship(screen)
     asteroids = [Asteroid(screen) for _ in range(8)]
@@ -33,10 +34,11 @@ def run_full(genome: neat.DefaultGenome,
         alive_time += 1
         
         # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
+        if screen is not None:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
         
         
         if screen is not None:
@@ -56,7 +58,7 @@ def run_full(genome: neat.DefaultGenome,
         else:
             idle_time = 0
         
-        reward += num_minerals_mined*10
+        reward += num_minerals_mined*100
         if len(minerals) <= 2:
             while len(minerals) < 5:
                 minerals.append(Mineral(screen))
@@ -101,5 +103,7 @@ def run_full(genome: neat.DefaultGenome,
     #     reward += 100
     # elif len(minerals)==0:
     #     reward += 500
-    pygame.quit()
+    if screen is not None:
+        pygame.quit()
+    reward += alive_time/4
     return reward
