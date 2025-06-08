@@ -30,7 +30,7 @@ if __name__ == "__main__":
         algo.problem = problem
         algo.opt = None
         algo.pop.set("F", np.zeros((len(algo.pop), 1)))
-        callback = MinerCallback("maneuvering_hard", run_full)
+        callback = MinerCallback("full", run_full)
         algo.callback = callback
         minimize(problem, algo, callback=callback, copy_algorithm=False, verbose=True, resample=False)
     # run_braking(x, True)
