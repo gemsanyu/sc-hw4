@@ -2,26 +2,29 @@ import math
 import random
 from typing import List, Optional, Tuple, Union
 
-import neat
-import neat.config
+from policy import Policy
 import pygame
 from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
                            Spaceship)
 from pygame.surface import Surface
-from utils import apply_action, generate_inputs
+from utils import apply_action, generate_inputs, assign_params
 
+import torch as T
+import numpy as np
 
-def run_full(genome: neat.DefaultGenome, 
-                          config: neat.Config, 
-                          visualizer: Optional[Surface]=None):
+@T.no_grad()
+def run_full(x:np.ndarray, is_visualize:bool=False):
+    x = T.from_numpy(x)
     screen = None
     clock = None
-    if visualizer is not None:
+    if is_visualize:
         pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
         clock = pygame.time.Clock()
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = Policy(51)
+    net.eval()
+    assign_params(net, x)
     ship = Spaceship(screen)
     asteroids = [Asteroid(screen) for _ in range(8)]
     minerals = [Mineral(screen) for _ in range(5)]
@@ -44,10 +47,10 @@ def run_full(genome: neat.DefaultGenome,
         if screen is not None:
             screen.fill(BLACK)
         inputs = generate_inputs(ship, minerals, asteroids, screen)
-        if inputs[1] == 1:
-            reward += max((1-inputs[0])*0.5, 0.01)
+        # if inputs[1] == 1:
+        #     reward += max((1-inputs[0])*0.5, 0.01)
         # Get actions from network
-        output = net.activate(inputs)
+        output = net(inputs)
         
         # Execute actions
         old_x, old_y = ship.x, ship.y
@@ -72,7 +75,20 @@ def run_full(genome: neat.DefaultGenome,
                 asteroid.move()
                 asteroid.draw()
             ship.draw()
-            visualizer.draw_stats(screen, reward, ship.minerals, ship, output)
+            stats = [
+                f"Ship Position {ship.x:.1f},{ship.y:.1f}",
+                f"Fitness: {reward:.1f}",
+                # f"Best: {self.best_fitness:.1f}",
+                f"Minerals: {minerals}",
+                f"Fuel: {ship.fuel:.1f}",
+                f"Output[0]: {output[0]:.2f}"
+                # f"Output[1]: {output[1]:.2f}"
+            ]
+            
+            for i, stat in enumerate(stats):
+                font = pygame.font.SysFont(None, 36)
+                text = font.render(stat, True, WHITE)
+                screen.blit(text, (10, 10 + i * 40))
             pygame.display.flip()
             clock.tick(30)
         

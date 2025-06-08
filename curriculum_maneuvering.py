@@ -2,13 +2,14 @@ import math
 import random
 from typing import List, Optional, Tuple, Union
 
-import neat
-import neat.config
+import numpy as np
+import torch as T
 import pygame
 from miner_objects import (BLACK, HEIGHT, WHITE, WIDTH, Asteroid, Mineral,
                            Spaceship)
 from pygame.surface import Surface
-from utils import apply_action, generate_inputs
+from utils import apply_action, generate_inputs, assign_params
+from policy import Policy
 
 
 def compute_max_distance_from_ship(sx, sy, dx, dy):
@@ -67,18 +68,19 @@ def generate_alternating_minerals_and_asteroids(sx, sy, screen)->Tuple[List[Mine
     return minerals, asteroids
     
 
-def run_maneuvering_1(genome: neat.DefaultGenome, 
-                          config: neat.Config, 
-                          visualizer: Optional[Surface]=None):
-    
+@T.no_grad()
+def run_maneuvering_easy(x: np.ndarray, is_visualize: bool=False):
+    x = T.from_numpy(x)
     screen = None
     clock = None
-    if visualizer is not None:
+    if is_visualize:
         pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
         clock = pygame.time.Clock()
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = Policy(51)
+    net.eval()
+    assign_params(net, x)
     ship = Spaceship(screen)
     
     # Random direction angle from the ship
@@ -115,7 +117,7 @@ def run_maneuvering_1(genome: neat.DefaultGenome,
             screen.fill(BLACK)
         inputs = generate_inputs(ship, minerals, asteroids, screen)
         # Get actions from network
-        output = net.activate(inputs)
+        output = net(inputs)
         
         # Execute actions
         old_x, old_y = ship.x, ship.y
@@ -136,7 +138,21 @@ def run_maneuvering_1(genome: neat.DefaultGenome,
                 asteroid.move()
                 asteroid.draw()
             ship.draw()
-            visualizer.draw_stats(screen, reward, ship.minerals, ship, output)
+            stats = [
+                f"Ship Position {ship.x:.1f},{ship.y:.1f}",
+                f"Fitness: {reward:.1f}",
+                # f"Best: {self.best_fitness:.1f}",
+                f"Minerals: {minerals}",
+                f"Fuel: {ship.fuel:.1f}",
+                f"Output[0]: {output[0]:.2f}",
+                f"Output[1]: {output[1]:.2f}"
+                # f"Output[1]: {output[1]:.2f}"
+            ]
+            
+            for i, stat in enumerate(stats):
+                font = pygame.font.SysFont(None, 36)
+                text = font.render(stat, True, WHITE)
+                screen.blit(text, (10, 10 + i * 40))
             pygame.display.flip()
             clock.tick(30)
         
@@ -170,18 +186,19 @@ def run_maneuvering_1(genome: neat.DefaultGenome,
     return reward
 
 
-def run_maneuvering_2(genome: neat.DefaultGenome, 
-                          config: neat.Config, 
-                          visualizer: Optional[Surface]=None):
-   
+@T.no_grad()
+def run_maneuvering_hard(x: np.ndarray, is_visualize: bool=False):
+    x = T.from_numpy(x)
     screen = None
     clock = None
-    if visualizer is not None:
+    if is_visualize:
         pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("NEAT - Space Miner Training")
         clock = pygame.time.Clock()
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = Policy(51)
+    net.eval()
+    assign_params(net, x)
     ship = Spaceship(screen)
     minerals, asteroids = generate_alternating_minerals_and_asteroids(ship.x, ship.y, screen)
     minerals.extend(Mineral(screen) for _ in range(2))
@@ -205,7 +222,7 @@ def run_maneuvering_2(genome: neat.DefaultGenome,
             screen.fill(BLACK)
         inputs = generate_inputs(ship, minerals, asteroids, screen)
         # Get actions from network
-        output = net.activate(inputs)
+        output = net(inputs)
         
         # Execute actions
         old_x, old_y = ship.x, ship.y
@@ -226,7 +243,21 @@ def run_maneuvering_2(genome: neat.DefaultGenome,
                 asteroid.move()
                 asteroid.draw()
             ship.draw()
-            visualizer.draw_stats(screen, reward, ship.minerals, ship, output)
+            stats = [
+                f"Ship Position {ship.x:.1f},{ship.y:.1f}",
+                f"Fitness: {reward:.1f}",
+                # f"Best: {self.best_fitness:.1f}",
+                f"Minerals: {minerals}",
+                f"Fuel: {ship.fuel:.1f}",
+                f"Output[0]: {output[0]:.2f}",
+                f"Output[1]: {output[1]:.2f}"
+                # f"Output[1]: {output[1]:.2f}"
+            ]
+            
+            for i, stat in enumerate(stats):
+                font = pygame.font.SysFont(None, 36)
+                text = font.render(stat, True, WHITE)
+                screen.blit(text, (10, 10 + i * 40))
             pygame.display.flip()
             clock.tick(30)
         

@@ -8,7 +8,15 @@ import pygame
 from miner_objects import (DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW, Asteroid,
                            Mineral, Spaceship)
 from pygame.surface import Surface
+import torch as T
 
+def assign_params(model: T.nn.Module, flat_params: T.Tensor):
+    pointer = 0
+    for param in model.parameters():
+        numel = param.numel()
+        new_data = flat_params[pointer:pointer + numel].view_as(param.data)
+        param.data.copy_(new_data)
+        pointer += numel
 
 def eval_function_template(simulation_evaluation, genome: neat.DefaultGenome, config: neat.config, num_samples:int=3):
     total_fitness = 0
@@ -138,13 +146,14 @@ def cast_ray(ox:float,
 
 def apply_action(ship:Spaceship, output, minerals)->int:
     # ship.angle += (output[0] * 2 - 1) * 0.1  # Turn (-1 to 1)
-    d_angle = max(min(output[0], 0.5), -0.5)
+    # d_angle = max(min(output[0], 0.5), -0.5)
+    d_angle = float(output[0])
     ship.angle += d_angle
     # dx, dy = 0,0
-    # if output[1] > 0.5:  # Thrust
-    dx = ship.speed * math.cos(ship.angle)
-    dy = ship.speed * math.sin(ship.angle)
-    ship.move(dx, dy)
+    if output[1] >=0:  # Thrust
+        dx = ship.speed * math.cos(ship.angle)
+        dy = ship.speed * math.sin(ship.angle)
+        ship.move(dx, dy)
     # num_minerals_mined: int = 0
     # if output[2] > 0.5:  # Mine
     num_minerals_mined = ship.mine(minerals)
@@ -268,4 +277,5 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
     #     inputs += [1, 0, 0]
     
     inputs.append(ship.fuel/100.0)
-    return inputs
+    return T.as_tensor(inputs)
+    # return np.asanyarray(inputs)
