@@ -1,39 +1,37 @@
-﻿import os
-import pathlib
-from functools import partial
-from typing import Callable, List
+﻿import pathlib
+import pickle
+from multiprocessing.pool import Pool
 
-import neat
-import pygame
-from curriculum_maneuvering import run_maneuvering_2
-from custom_reporter import EarlyStoppingReport
-from parallel import ParallelEvaluator
-from utils import eval_function_template
-from visualizer import TrainingVisualizer
+import numpy as np
+import torch as T
+from curriculum_maneuvering import run_maneuvering_hard
+from policy import Policy
+from problem import MinerCallback, Problem
+from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.core.problem import StarmapParallelization
+from pymoo.optimize import minimize
+from pymoo.termination.max_gen import MaximumGenerationTermination
 
 
-def run_neat(config_file):    
-    last_checkpoint_filepath = pathlib.Path()/"checkpoints"/"maneuvering_easy"/"best_population_checkpoint"
-    population = neat.Checkpointer.restore_checkpoint(last_checkpoint_filepath.absolute())
-    # Reset stagnation history
-    for species in population.species.species.values():
-        species.last_improved = population.generation# Add reporters
-    population.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
-    population.add_reporter(stats)
-    checkpoint_dir = pathlib.Path()/"checkpoints"/"maneuvering_hard"
-    population.add_reporter(EarlyStoppingReport(run_maneuvering_2, checkpoint_dir, fitness_target=2000))
-    # population.add_reporter(neat.Checkpointer(generation_interval=10))
-    eval_function = partial(eval_function_template, run_maneuvering_2)
-    evaluator = ParallelEvaluator(12, eval_function)
-    # Run NEAT
-    try:
-        winner = population.run(evaluator.evaluate, 1000)
-    finally:
-        pygame.quit()
+def count_total_params(model: T.nn.Module) -> int:
+    return sum(p.numel() for p in model.parameters())
 
 if __name__ == "__main__":
-    
-    local_dir = os.path.dirname(__file__)
-    config_file = os.path.join(local_dir, "neat_config.txt")
-    run_neat(config_file)
+    policy = Policy(51)
+    num_params = count_total_params(policy)
+    algo_checkpoint_path = pathlib.Path()/"checkpoints"/"maneuvering_easy"/"algorithm.pkl"
+    algo = None
+    with Pool(12) as pool:
+        runner = StarmapParallelization(pool.starmap)
+        problem = Problem(num_params, run_maneuvering_hard, n_replication=3, elementwise_runner=runner)
+        with open(algo_checkpoint_path.absolute(), "rb") as f:
+            algo = pickle.load(f)
+        algo.termination = MaximumGenerationTermination(1000)
+        algo.problem = problem
+        algo.opt = None
+        algo.pop.set("F", np.zeros((len(algo.pop), 1)))
+        callback = MinerCallback("maneuvering_hard", run_maneuvering_hard)
+        algo.callback = callback
+        minimize(problem, algo, callback=callback, copy_algorithm=False, verbose=True, resample=False)
+    # run_braking(x, True)
+    # print(num_params)
