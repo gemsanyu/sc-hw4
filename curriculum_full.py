@@ -63,7 +63,7 @@ def run_full(x:np.ndarray, is_visualize:bool=False):
         
         reward += num_minerals_mined*100
         if len(minerals) <= 2:
-            while len(minerals) < 5:
+            while len(minerals) < 4:
                 minerals.append(Mineral(screen))
 
         # Visualization
@@ -81,8 +81,8 @@ def run_full(x:np.ndarray, is_visualize:bool=False):
                 # f"Best: {self.best_fitness:.1f}",
                 f"Minerals: {minerals}",
                 f"Fuel: {ship.fuel:.1f}",
-                f"Output[0]: {output[0]:.2f}"
-                # f"Output[1]: {output[1]:.2f}"
+                f"Output[0]: {output[0]:.2f}",
+                f"Output[1]: {output[1]:.2f}"
             ]
             
             for i, stat in enumerate(stats):
