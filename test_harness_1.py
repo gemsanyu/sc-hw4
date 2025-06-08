@@ -6,12 +6,13 @@ from typing import List, Optional, Tuple, Union
 
 import neat
 import pygame
-#from miner import Spaceship, Mineral, Asteroid  # Import your game classes random
-from miner_harness import (  # Import your game classes fixed locations
-    Asteroid, Mineral, Spaceship)
 from miner_objects import BLACK, BLUE, DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW
 from pygame.surface import Surface
 from utils import apply_action, ray_circle_intersect_toroidal
+
+#from miner import Spaceship, Mineral, Asteroid  # Import your game classes random
+from miner_harness import (  # Import your game classes fixed locations
+    Asteroid, Mineral, Spaceship)
 
 # from miner_harness2 import Spaceship, Mineral, Asteroid 
 #from miner_harness3 import Spaceship, Mineral, Asteroid 
@@ -86,6 +87,7 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
         pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Trained Miner Ship")
+        font = pygame.font.SysFont(None, 24)
         clock = pygame.time.Clock()
     
     successful_minings=0
@@ -96,7 +98,6 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
     ship = Spaceship(screen)
     minerals = [Mineral(screen) for _ in range(5)]
     asteroids = [Asteroid(screen) for _ in range(len(Asteroid._coordinates))]
-    font = pygame.font.SysFont(None, 24)
     alive_time=0
 
     running = True
@@ -152,7 +153,7 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
                 screen.blit(text, (10, 10 + i * 25))
             
             pygame.display.flip()
-        clock.tick(30)
+            clock.tick(30)
 
     running=True
     while running and screen is not None:
@@ -180,7 +181,7 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
             pygame.display.flip()
         clock.tick(60)
     score = ship.minerals*100+alive_time/4
-    print(f"Final Score:{score:.1f}")   
+    # print(f"Final Score:{score:.1f}")   
     pygame.quit()
     return score
 
