@@ -8,7 +8,13 @@ class Policy(Module):
                                 ReLU(),
                                 Linear(64, 32),
                                 ReLU(),
-                                Linear(32, 2),
+                                Linear(32, 16),
+                                ReLU(),
+                                Linear(16, 8),
+                                ReLU(),
+                                Linear(8, 4),
+                                ReLU(),
+                                Linear(4, 2),
                                 Tanh())
     
     def forward(self, x):

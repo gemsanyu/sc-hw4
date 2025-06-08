@@ -20,8 +20,8 @@ class Problem(ElementwiseProblem):
         super().__init__(n_var=n_var,
                          n_obj=1,
                          n_constr=0,
-                         xl=-0.2,
-                         xu=0.2,
+                         xl=-0.3,
+                         xu=0.3,
                          elementwise=elementwise, 
                          **kwargs)
         self.eval_function = eval_function
