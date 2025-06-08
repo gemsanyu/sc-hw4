@@ -78,12 +78,15 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
 
 def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=False):
     # Initialize pygame
-    pygame.init()
+    Mineral._index = 0
+    Asteroid._index = 0
     screen = None
+    clock = None
     if visualize:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Trained Miner Ship")
-    clock = pygame.time.Clock()
+        pygame.display.set_caption("Trained Miner Ship")
+        clock = pygame.time.Clock()
     
     successful_minings=0
     # Create the neural network
@@ -101,10 +104,9 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
         alive_time+=1
         if screen is not None:
             screen.fill(BLACK)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
         
         
         inputs = generate_inputs(ship, minerals, asteroids)
@@ -127,13 +129,14 @@ def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=Fal
                 running = False
 
         # Draw everything
-        for mineral in minerals:
-            mineral.draw()
-        for asteroid in asteroids:
-            asteroid.draw()
-        ship.draw()
+        
 
         if screen is not None:
+            for mineral in minerals:
+                mineral.draw()
+            for asteroid in asteroids:
+                asteroid.draw()
+            ship.draw()
             # Display fuel and minerals
             font = pygame.font.SysFont(None, 36)
             
