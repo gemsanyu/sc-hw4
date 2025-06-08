@@ -4,15 +4,15 @@ import os
 import pickle
 from typing import List, Optional, Tuple, Union
 
-import neat
+import numpy as np
 import pygame
 #from miner import Spaceship, Mineral, Asteroid  # Import your game classes random
 from miner_harness import (  # Import your game classes fixed locations
     Asteroid, Mineral, Spaceship)
 from miner_objects import BLACK, BLUE, DIAG, HEIGHT, RED, WHITE, WIDTH, YELLOW
 from pygame.surface import Surface
-from utils import apply_action, ray_circle_intersect_toroidal
-
+from utils import apply_action, ray_circle_intersect_toroidal, assign_params
+from policy import Policy
 # from miner_harness2 import Spaceship, Mineral, Asteroid 
 #from miner_harness3 import Spaceship, Mineral, Asteroid 
 
@@ -76,18 +76,23 @@ def generate_inputs(ship: Spaceship, minerals: List[Mineral], asteroids: List[As
     inputs.append(ship.fuel/100.0)
     return inputs
 
-def run_harness_1(genome: neat.DefaultGenome, config: neat.Config, visualize=False):
+@T.no_grad()
+def run_harness_1(x: np.ndarray, is_visualize: bool=False):
     # Initialize pygame
-    pygame.init()
+    
     screen = None
-    if visualize:
+    clock = None
+    if is_visualize:
+        pygame.init()
         screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Trained Miner Ship")
-    clock = pygame.time.Clock()
+        pygame.display.set_caption("Trained Miner Ship")
+        clock = pygame.time.Clock()
     
     successful_minings=0
     # Create the neural network
-    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    net = Policy(51)
+    net.eval()
+    assign_params(net, x)
     
     # Game setup
     ship = Spaceship(screen)
