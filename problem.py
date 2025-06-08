@@ -1,6 +1,7 @@
 from typing import Callable
 import pathlib
 import pickle
+import math
 
 import numpy as np
 
@@ -45,7 +46,7 @@ class MinerCallback(Callback):
         self.algo_checkpoint_path = self.checkpoint_dir/"algorithm.pkl"
 
     def notify(self, algorithm:Algorithm):
-        best_fitness = -algorithm.pop.get("F").min()
+        best_fitness = -algorithm.opt[0].F[0]
         if self.best_fitness < best_fitness:
             self.best_fitness = best_fitness 
             best = algorithm.opt[0].X

@@ -34,9 +34,8 @@ class Spaceship:
         return num_minerals_mined
 
     def draw(self):
-        if self.screen is None:
-            return
-        pygame.draw.circle(self.screen, BLUE, (int(self.x), int(self.y)), self.radius)
+        if self.screen is not None:
+            pygame.draw.circle(self.screen, BLUE, (int(self.x), int(self.y)), self.radius)
         # Draw a triangle for direction
         points = [
             (self.x + self.radius * math.cos(self.angle), 
@@ -46,7 +45,8 @@ class Spaceship:
             (self.x + self.radius * math.cos(self.angle - 2.5), 
              self.y + self.radius * math.sin(self.angle - 2.5))
         ]
-        pygame.draw.polygon(self.screen, WHITE, points)
+        if self.screen is not None:
+            pygame.draw.polygon(self.screen, WHITE, points)
 
 # Mineral
 class Mineral:
